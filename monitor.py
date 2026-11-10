@@ -1,3 +1,4 @@
+import os
 import requests
 import time
 
@@ -5,13 +6,10 @@ import time
 # CONFIGURATION
 # =====================================
 
-BOT_TOKEN = "BOT_TOKEN"
-CHAT_ID = "CHAT_ID"
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
-# URL = "https://blinkit.com/prn/sony-playstation-instant-voucher/prid/698593"
-URL="https://blinkit.com/prn/blinkit-gift-card/prid/768015"
-
-CHECK_INTERVAL = 60
+URL = "https://blinkit.com/prn/blinkit-gift-card/prid/768015"
 
 headers = {
     "User-Agent": (
@@ -21,8 +19,6 @@ headers = {
     )
 }
 
-alert_sent = False
-
 
 # =====================================
 # TELEGRAM
@@ -30,7 +26,7 @@ alert_sent = False
 
 def send_telegram(message):
     try:
-        requests.post(
+        response = requests.post(
             f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
             json={
                 "chat_id": CHAT_ID,
@@ -38,10 +34,12 @@ def send_telegram(message):
             },
             timeout=15
         )
-        print("Telegram sent")
+
+        print("Telegram Status:", response.status_code)
+        print(response.text)
 
     except Exception as e:
-        print("Telegram error:", e)
+        print("Telegram Error:", e)
 
 
 # =====================================
@@ -49,8 +47,6 @@ def send_telegram(message):
 # =====================================
 
 def check_stock():
-    global alert_sent
-
     try:
         response = requests.get(
             URL,
@@ -59,18 +55,20 @@ def check_stock():
         )
 
         print(
-            f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] "
+            f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] "
             f"Status={response.status_code}"
         )
 
         if response.status_code != 200:
+            print("Page not accessible")
             return
 
         page = response.text.upper()
 
-        # Save HTML for debugging
-        with open("blinkit_debug.html", "w", encoding="utf-8") as f:
-            f.write(response.text)
+        stock_terms = [
+            "ADD TO CART",
+            "BUY NOW"
+        ]
 
         out_of_stock_terms = [
             "OUT OF STOCK",
@@ -79,36 +77,20 @@ def check_stock():
             "NOT AVAILABLE"
         ]
 
-        stock_terms = [
-            "ADD TO CART",
-            "BUY NOW"
-        ]
-
-        found_out = any(term in page for term in out_of_stock_terms)
         found_stock = any(term in page for term in stock_terms)
+        found_out = any(term in page for term in out_of_stock_terms)
 
         print("Found stock keyword:", found_stock)
         print("Found out-of-stock keyword:", found_out)
 
-        if found_out:
-            in_stock = False
-        elif found_stock:
-            in_stock = True
-        else:
-            in_stock = False
-
-        if in_stock and not alert_sent:
-
+        if found_stock and not found_out:
             send_telegram(
-                f"🚨 PSN Voucher Available!\n\n{URL}"
+                f"🚨 STOCK DETECTED!\n\n{URL}"
             )
 
-            alert_sent = True
-            print("STOCK FOUND")
+            print("Stock Alert Sent")
 
-        elif not in_stock:
-
-            alert_sent = False
+        else:
             print("No stock detected")
 
     except Exception as e:
@@ -116,11 +98,7 @@ def check_stock():
 
 
 # =====================================
-# START
+# RUN ONCE
 # =====================================
 
-send_telegram("✅ Blinkit Monitor Started")
-
-while True:
-    check_stock()
-    time.sleep(CHECK_INTERVAL)
+check_stock()
