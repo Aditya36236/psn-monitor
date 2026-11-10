@@ -9,7 +9,7 @@ import time
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
-URL = "https://blinkit.com/prn/blinkit-gift-card/prid/768015"
+URL = "https://e2zstore.com/category/psn-india/"
 
 headers = {
     "User-Agent": (
