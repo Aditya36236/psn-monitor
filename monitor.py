@@ -5,8 +5,8 @@ import time
 # CONFIGURATION
 # =====================================
 
-BOT_TOKEN = "YOUR_NEW_TOKEN"
-CHAT_ID = "YOUR_CHAT_ID"
+BOT_TOKEN = "BOT_TOKEN"
+CHAT_ID = "CHAT_ID"
 
 # URL = "https://blinkit.com/prn/sony-playstation-instant-voucher/prid/698593"
 URL="https://blinkit.com/prn/blinkit-gift-card/prid/768015"
